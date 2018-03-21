@@ -114,12 +114,6 @@
                 <groupId>org.ballerinalang</groupId>
                 <artifactId>ballerina-core</artifactId>
                 <version>${ballerina.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.ballerinalang</groupId>
@@ -146,6 +140,8 @@
                 <artifactId>ballerina-launcher</artifactId>
                 <version>${ballerina.version}</version>
             </dependency>
+
+
             <dependency>
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
@@ -295,7 +291,7 @@
         <version.kafka.scala>2.11</version.kafka.scala>
         <debezium.version>0.7.0</debezium.version>
         <project.scm.id>my-scm-server</project.scm.id>
-        <ballerina.version>0.95.6</ballerina.version>
+        <ballerina.version>0.964.1-SNAPSHOT</ballerina.version>
         <apache.kafka.version>1.0.0</apache.kafka.version>
         <org.testng.version>6.11</org.testng.version>
         <maven.findbugsplugin.version.exclude>findbugs-exclude.xml</maven.findbugsplugin.version.exclude>

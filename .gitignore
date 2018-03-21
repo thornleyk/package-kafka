@@ -31,3 +31,4 @@ target
 *.ipr
 .idea
 .m2
+.vscode
