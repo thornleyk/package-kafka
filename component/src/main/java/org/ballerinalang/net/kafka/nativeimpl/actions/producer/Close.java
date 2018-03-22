@@ -19,14 +19,13 @@ package org.ballerinalang.net.kafka.nativeimpl.actions.producer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.KafkaException;
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.connector.api.AbstractNativeAction;
-import org.ballerinalang.connector.api.ConnectorFuture;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
+import org.ballerinalang.model.NativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BConnector;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaAction;
 import org.ballerinalang.natives.annotations.ReturnType;
@@ -44,11 +43,11 @@ import org.ballerinalang.util.exceptions.BallerinaException;
                         type = TypeKind.CONNECTOR)
         },
         returnType = {@ReturnType(type = TypeKind.NONE)})
-public class Close extends AbstractNativeAction {
+public class Close implements NativeCallableUnit {
 
     @Override
-    public ConnectorFuture execute(Context context) {
-        BConnector producerConnector = (BConnector) getRefArgument(context, 0);
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
+        BConnector producerConnector = (BConnector) context.getRefArgument(0);
 
         BMap producerMap = (BMap) producerConnector.getRefField(2);
         BStruct producerStruct = (BStruct) producerMap.get(new BString(KafkaConstants.NATIVE_PRODUCER));
@@ -60,10 +59,11 @@ public class Close extends AbstractNativeAction {
         } catch (KafkaException e) {
             throw new BallerinaException("Failed to close the producer " + e.getMessage(), e, context);
         }
-        ClientConnectorFuture future = new ClientConnectorFuture();
-        future.notifySuccess();
-        return future;
+        callableUnitCallback.notifySuccess();
     }
 
+    @Override
+    public boolean isBlocking() {
+        return true;
+    }
 }
-

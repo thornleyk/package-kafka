@@ -18,26 +18,25 @@
 
 package org.ballerinalang.net.kafka.nativeimpl.actions.producer;
 
+import java.util.Properties;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.KafkaException;
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.connector.api.AbstractNativeAction;
-import org.ballerinalang.connector.api.ConnectorFuture;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
+import org.ballerinalang.model.NativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BConnector;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaAction;
 import org.ballerinalang.net.kafka.KafkaConstants;
 import org.ballerinalang.net.kafka.KafkaUtils;
 import org.ballerinalang.util.exceptions.BallerinaException;
-
-import java.util.Properties;
 
 /**
  * Native action ballerina.net.kafka:<init> hidden action which initializes a producer instance for connector.
@@ -49,11 +48,11 @@ import java.util.Properties;
                          @Argument(name = "c",
                                    type = TypeKind.CONNECTOR)
                  })
-public class Init extends AbstractNativeAction {
+public class Init implements NativeCallableUnit {
 
     @Override
-    public ConnectorFuture execute(Context context) {
-        BConnector producerConnector = (BConnector) getRefArgument(context, 0);
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
+        BConnector producerConnector = (BConnector) context.getRefArgument(0);
 
         BStringArray stringArray = (BStringArray) producerConnector.getRefField(0);
         String bootstrapServers;
@@ -83,15 +82,12 @@ public class Init extends AbstractNativeAction {
         } catch (IllegalStateException | KafkaException e) {
             throw new BallerinaException("Failed to initialize the producer " + e.getMessage(), e, context);
         }
-        ClientConnectorFuture future = new ClientConnectorFuture();
-        future.notifySuccess();
-        return future;
+        callableUnitCallback.notifySuccess();
     }
-
+    
     @Override
-    public boolean isNonBlockingAction() {
-        return false;
+    public boolean isBlocking() {
+        return true;
     }
-
 }
 

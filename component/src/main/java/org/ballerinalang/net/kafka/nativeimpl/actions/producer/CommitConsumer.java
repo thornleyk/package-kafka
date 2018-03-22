@@ -16,34 +16,32 @@
 
 package org.ballerinalang.net.kafka.nativeimpl.actions.producer;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.TopicPartition;
-import org.ballerinalang.bre.BallerinaTransactionContext;
-import org.ballerinalang.bre.BallerinaTransactionManager;
 import org.ballerinalang.bre.Context;
-import org.ballerinalang.connector.api.AbstractNativeAction;
-import org.ballerinalang.connector.api.ConnectorFuture;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
+import org.ballerinalang.model.NativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BConnector;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.nativeimpl.actions.ClientConnectorFuture;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaAction;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.kafka.KafkaConstants;
 import org.ballerinalang.net.kafka.transaction.KafkaTransactionContext;
 import org.ballerinalang.util.exceptions.BallerinaException;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import org.ballerinalang.util.transactions.BallerinaTransactionContext;
 
 /**
  * Native action ballerina.net.kafka:commitConsumer which commits the consumer offsets in transaction.
@@ -59,11 +57,11 @@ import java.util.Set;
                         structPackage = "ballerina.net.kafka")
         },
         returnType = {@ReturnType(type = TypeKind.NONE)})
-public class CommitConsumer extends AbstractNativeAction {
+public class CommitConsumer implements NativeCallableUnit {
 
     @Override
-    public ConnectorFuture execute(Context context) {
-        BConnector producerConnector = (BConnector) getRefArgument(context, 0);
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
+        BConnector producerConnector = (BConnector) context.getRefArgument(0);
 
         BMap producerMap = (BMap) producerConnector.getRefField(2);
         BStruct producerStruct = (BStruct) producerMap.get(new BString(KafkaConstants.NATIVE_PRODUCER));
@@ -73,7 +71,7 @@ public class CommitConsumer extends AbstractNativeAction {
         Properties producerProperties = (Properties) producerStruct
                 .getNativeData(KafkaConstants.NATIVE_PRODUCER_CONFIG);
 
-        BStruct consumerStruct = (BStruct) getRefArgument(context, 1);
+        BStruct consumerStruct = (BStruct) context.getRefArgument(1);
         KafkaConsumer<byte[], byte[]> kafkaConsumer = (KafkaConsumer) consumerStruct
                 .getNativeData(KafkaConstants.NATIVE_CONSUMER);
 
@@ -104,10 +102,11 @@ public class CommitConsumer extends AbstractNativeAction {
         } catch (IllegalStateException | KafkaException e) {
             throw new BallerinaException("Failed to send offsets to transaction. " + e.getMessage(), e, context);
         }
-        ClientConnectorFuture future = new ClientConnectorFuture();
-        future.notifySuccess();
-        return future;
+        callableUnitCallback.notifySuccess();
     }
 
+    @Override
+    public boolean isBlocking() {
+        return true;
+    }
 }
-
