@@ -17,20 +17,25 @@
 
 package org.ballerinalang.net.kafka.nativeimpl.functions.consumer;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.TopicPartition;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
 import org.ballerinalang.bre.bvm.WorkerContext;
+import org.ballerinalang.model.NativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BFunctionPointer;
 import org.ballerinalang.model.values.BRefType;
 import org.ballerinalang.model.values.BRefValueArray;
 import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.natives.AbstractNativeFunction;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
@@ -42,10 +47,6 @@ import org.ballerinalang.util.codegen.ProgramFile;
 import org.ballerinalang.util.codegen.cpentries.FunctionRefCPEntry;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.ballerinalang.util.program.BLangFunctions;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Native function ballerina.net.kafka:subscribeWithPartitionRebalance subscribes to given topic array
@@ -65,11 +66,11 @@ import java.util.List;
         },
         returnType = {@ReturnType(type = TypeKind.STRUCT)},
         isPublic = true)
-public class SubscribeWithPartitionRebalance extends AbstractNativeFunction {
+public class SubscribeWithPartitionRebalance implements NativeCallableUnit { 
 
     @Override
-    public BValue[] execute(Context context) {
-        BStruct consumerStruct = (BStruct) getRefArgument(context, 0);
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
+        BStruct consumerStruct = (BStruct) context.getRefArgument(0);
         BStringArray topicArray = (BStringArray) getRefArgument(context, 1);
         ArrayList<String> topics = new ArrayList<String>();
         for (int counter = 0; counter < topicArray.size(); counter++) {
@@ -108,8 +109,8 @@ public class SubscribeWithPartitionRebalance extends AbstractNativeFunction {
             kafkaConsumer.subscribe(topics, listener);
         } catch (IllegalArgumentException |
                 IllegalStateException | KafkaException e) {
-            return getBValues(BLangVMErrors.createError(context, 0, e.getMessage()));
-        }
+                    context.setReturnValues(BLangVMErrors.createError(context, 0, e.getMessage()));
+                }
         return VOID_RETURN;
     }
 
@@ -182,5 +183,8 @@ public class SubscribeWithPartitionRebalance extends AbstractNativeFunction {
 
     }
 
+    @Override
+    public boolean isBlocking() {
+        return true;
+    }
 }
-

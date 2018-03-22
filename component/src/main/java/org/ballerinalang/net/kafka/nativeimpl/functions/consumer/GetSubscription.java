@@ -16,23 +16,23 @@
 
 package org.ballerinalang.net.kafka.nativeimpl.functions.consumer;
 
+import java.util.Set;
+
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.KafkaException;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
+import org.ballerinalang.model.NativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.AbstractNativeFunction;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.kafka.KafkaConstants;
 import org.ballerinalang.util.exceptions.BallerinaException;
-
-import java.util.Set;
 
 /**
  * Native function ballerina.net.kafka:getSubscription returns topic array which consumer is subscribed to.
@@ -49,11 +49,11 @@ import java.util.Set;
         returnType = {@ReturnType(type = TypeKind.ARRAY, elementType = TypeKind.STRING),
                 @ReturnType(type = TypeKind.STRUCT)},
         isPublic = true)
-public class GetSubscription extends AbstractNativeFunction {
+public class GetSubscription implements NativeCallableUnit {
 
     @Override
-    public BValue[] execute(Context context) {
-        BStruct consumerStruct = (BStruct) getRefArgument(context, 0);
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
+        BStruct consumerStruct = (BStruct) context.getRefArgument(0);
 
         KafkaConsumer<byte[], byte[]> kafkaConsumer = (KafkaConsumer) consumerStruct
                 .getNativeData(KafkaConstants.NATIVE_CONSUMER);
@@ -70,10 +70,14 @@ public class GetSubscription extends AbstractNativeFunction {
                     subscriptionArray.add(i++, subscription);
                 }
             }
-            return getBValues(subscriptionArray);
+            context.setReturnValues(subscriptionArray);
         } catch (KafkaException e) {
-            return getBValues(null, BLangVMErrors.createError(context, 0, e.getMessage()));
+            context.setReturnValues(BLangVMErrors.createError(context, 0, e.getMessage()));
         }
     }
 
+    @Override
+    public boolean isBlocking() {
+        return true;
+    }
 }

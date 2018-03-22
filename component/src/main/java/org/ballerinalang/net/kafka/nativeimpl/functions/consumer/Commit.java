@@ -19,10 +19,10 @@ package org.ballerinalang.net.kafka.nativeimpl.functions.consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.KafkaException;
 import org.ballerinalang.bre.Context;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
+import org.ballerinalang.model.NativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.AbstractNativeFunction;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
@@ -45,11 +45,11 @@ import org.ballerinalang.util.exceptions.BallerinaException;
         returnType = {@ReturnType(type = TypeKind.NONE)},
         isPublic = true
 )
-public class Commit extends AbstractNativeFunction {
+public class Commit implements NativeCallableUnit {
 
     @Override
-    public BValue[] execute(Context context) {
-        BStruct consumerStruct = (BStruct) getRefArgument(context, 0);
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
+        BStruct consumerStruct = (BStruct) context.getRefArgument(0);
         KafkaConsumer<byte[], byte[]> kafkaConsumer = (KafkaConsumer) consumerStruct
                 .getNativeData(KafkaConstants.NATIVE_CONSUMER);
         if (kafkaConsumer == null) {
@@ -61,9 +61,13 @@ public class Commit extends AbstractNativeFunction {
         } catch (KafkaException e) {
             throw new BallerinaException("Failed to commit offsets. " + e.getMessage(), e, context);
         }
-        return VOID_RETURN;
+        context.setReturnValues();;
     }
-
+    
+    @Override
+    public boolean isBlocking() {
+        return true;
+    }
 }
 
 

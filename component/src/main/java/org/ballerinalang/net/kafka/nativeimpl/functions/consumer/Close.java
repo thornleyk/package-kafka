@@ -20,16 +20,17 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.KafkaException;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
+import org.ballerinalang.model.NativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.AbstractNativeFunction;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.kafka.KafkaConstants;
 import org.ballerinalang.util.exceptions.BallerinaException;
+
 
 /**
  * Native function ballerina.net.kafka:close which closes a given consumer.
@@ -45,12 +46,12 @@ import org.ballerinalang.util.exceptions.BallerinaException;
         },
         returnType = {@ReturnType(type = TypeKind.STRUCT)},
         isPublic = true)
-public class Close extends AbstractNativeFunction {
+public class Close implements NativeCallableUnit {
 
     @Override
-    public BValue[] execute(Context context) {
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
         // Closes the Kafka native consumer.
-        BStruct consumerStruct = (BStruct) getRefArgument(context, 0);
+        BStruct consumerStruct = (BStruct) context.getRefArgument(0);
         KafkaConsumer<byte[], byte[]> kafkaConsumer = (KafkaConsumer) consumerStruct
                 .getNativeData(KafkaConstants.NATIVE_CONSUMER);
         if (kafkaConsumer == null) {
@@ -62,10 +63,14 @@ public class Close extends AbstractNativeFunction {
         try {
             kafkaConsumer.close();
         } catch (KafkaException e) {
-            return getBValues(BLangVMErrors.createError(context, 0, e.getMessage()));
+            context.setReturnValues(BLangVMErrors.createError(context, 0, e.getMessage()));
         }
-        return VOID_RETURN;
+        context.setReturnValues();
     }
-
+    
+    @Override
+    public boolean isBlocking() {
+        return true;
+    }
 }
 

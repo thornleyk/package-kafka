@@ -22,10 +22,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.KafkaException;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
+import org.ballerinalang.model.NativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.AbstractNativeFunction;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
@@ -49,22 +49,22 @@ import java.util.Properties;
         },
         returnType = {@ReturnType(type = TypeKind.STRUCT)},
         isPublic = true)
-public class Connect extends AbstractNativeFunction {
+public class Connect implements NativeCallableUnit {
 
     @Override
-    public BValue[] execute(Context context) {
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
         // Consumer initialization.
-        BStruct consumerStruct = (BStruct) getRefArgument(context, 0);
+        BStruct consumerStruct = (BStruct) context.getRefArgument(0);
         BStruct consumerConfig = (BStruct) consumerStruct.getRefField(0);
         // Check whether consumer configuration is available.
         if (consumerConfig == null) {
-            return getBValues(BLangVMErrors.createError(context,
+            context.setReturnValues(BLangVMErrors.createError(context,
                     0, "Kafka consumer is not initialized with consumer configuration."));
         }
         // Check whether already native consumer is attached to the struct.
         // This can be happen either from Kafka service or via programmatically.
         if (consumerStruct.getNativeData(KafkaConstants.NATIVE_CONSUMER) != null) {
-            return getBValues(BLangVMErrors.createError(context,
+            context.setReturnValues(BLangVMErrors.createError(context,
                     0, "Kafka consumer is already connected to external broker." +
                             " Please close it before re-connecting the external broker again."));
         }
@@ -75,10 +75,13 @@ public class Connect extends AbstractNativeFunction {
             KafkaConsumer<byte[], byte[]> kafkaConsumer = new KafkaConsumer<>(consumerProperties);
             consumerStruct.addNativeData(KafkaConstants.NATIVE_CONSUMER, kafkaConsumer);
         } catch (KafkaException e) {
-            return getBValues(BLangVMErrors.createError(context, 0, e.getMessage()));
+            context.setReturnValues(BLangVMErrors.createError(context, 0, e.getMessage()));
         }
-        return VOID_RETURN;
+        context.setReturnValues();
     }
 
+    @Override
+    public boolean isBlocking() {
+        return true;
+    }
 }
-

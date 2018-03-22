@@ -20,8 +20,8 @@ package org.ballerinalang.net.kafka.transaction;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.KafkaException;
-import org.ballerinalang.bre.BallerinaTransactionContext;
 import org.ballerinalang.util.exceptions.BallerinaException;
+import org.ballerinalang.util.transactions.BallerinaTransactionContext;
 
 import javax.transaction.xa.XAResource;
 

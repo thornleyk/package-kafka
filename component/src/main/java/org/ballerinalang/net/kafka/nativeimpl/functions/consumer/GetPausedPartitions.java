@@ -16,17 +16,21 @@
 
 package org.ballerinalang.net.kafka.nativeimpl.functions.consumer;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.TopicPartition;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
+import org.ballerinalang.bre.bvm.CallableUnitCallback;
+import org.ballerinalang.model.NativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BRefType;
 import org.ballerinalang.model.values.BRefValueArray;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.AbstractNativeFunction;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
@@ -34,10 +38,6 @@ import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.net.kafka.KafkaConstants;
 import org.ballerinalang.net.kafka.KafkaUtils;
 import org.ballerinalang.util.exceptions.BallerinaException;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Native function ballerina.net.kafka:getPausedPartitions returns paused partitions for given consumer.
@@ -55,11 +55,11 @@ import java.util.Set;
                 structPackage = "ballerina.net.kafka"),
                 @ReturnType(type = TypeKind.STRUCT)},
         isPublic = true)
-public class GetPausedPartitions extends AbstractNativeFunction {
+public class GetPausedPartitions implements NativeCallableUnit { 
 
     @Override
-    public BValue[] execute(Context context) {
-        BStruct consumerStruct = (BStruct) getRefArgument(context, 0);
+    public void execute(Context context, CallableUnitCallback callableUnitCallback) {
+        BStruct consumerStruct = (BStruct) context.getRefArgument(0);
 
         KafkaConsumer<byte[], byte[]> kafkaConsumer = (KafkaConsumer) consumerStruct
                 .getNativeData(KafkaConstants.NATIVE_CONSUMER);
@@ -79,12 +79,16 @@ public class GetPausedPartitions extends AbstractNativeFunction {
                     assignmentList.add(partitionStruct);
                 });
             }
-            return getBValues(new BRefValueArray(assignmentList.toArray(new BRefType[0]),
+            context.setReturnValues(new BRefValueArray(assignmentList.toArray(new BRefType[0]),
                     KafkaUtils.createKafkaPackageStruct(context,
                             KafkaConstants.TOPIC_PARTITION_STRUCT_NAME).getType()));
         } catch (KafkaException e) {
-            return getBValues(null, BLangVMErrors.createError(context, 0, e.getMessage()));
+                context.setReturnValues(BLangVMErrors.createError(context, 0, e.getMessage()));
         }
     }
 
+    @Override
+    public boolean isBlocking() {
+        return true;
+    }
 }

@@ -38,7 +38,7 @@ package ballerina.net.kafka;
 @Field { value:"checkCRCS: Check the CRC32 of the records consumed." }
 @Field { value:"excludeInternalTopics: Whether records from internal topics should be exposed to the consumer." }
 @Field { value:"properties: Additional properties array." }
-public annotation configuration attach service<> {
+public struct configuration {
     string bootstrapServers;
     string groupId;
     string[] topics;
@@ -77,3 +77,6 @@ public annotation configuration attach service<> {
     string isolationLevel;
     string[] properties;
 }
+
+@Description {value:"Configurations annotation for a Kafka service"}
+public annotation <service> serviceConfig configuration;
