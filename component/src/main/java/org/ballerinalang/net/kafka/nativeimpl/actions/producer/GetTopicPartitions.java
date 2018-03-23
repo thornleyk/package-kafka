@@ -75,10 +75,13 @@ public class GetTopicPartitions implements NativeCallableUnit {
                     infoStruct.setIntField(0, partitionInfo.partition());
                     infoList.add(infoStruct);
                 });
-                context.getControlStackNew().getCurrentFrame().returnValues[0] =
-                        new BRefValueArray(infoList.toArray(new BRefType[0]),
-                                KafkaUtils.createKafkaPackageStruct(context,
-                                        KafkaConstants.TOPIC_PARTITION_STRUCT_NAME).getType());
+                context.setReturnValues(new BRefValueArray(infoList.toArray(new BRefType[0]),
+                KafkaUtils.createKafkaPackageStruct(context,
+                        KafkaConstants.TOPIC_PARTITION_STRUCT_NAME).getType()));
+                //context.getControlStackNew().getCurrentFrame().returnValues[0] =
+                //        new BRefValueArray(infoList.toArray(new BRefType[0]),
+                //                KafkaUtils.createKafkaPackageStruct(context,
+                //                        KafkaConstants.TOPIC_PARTITION_STRUCT_NAME).getType());
             }
         } catch (KafkaException e) {
             throw new BallerinaException("Failed to fetch partitions from the producer " + e.getMessage(), e, context);

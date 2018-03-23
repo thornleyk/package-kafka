@@ -22,7 +22,6 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.KafkaException;
-import org.ballerinalang.bre.BallerinaTransactionManager;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.CallableUnitCallback;
 import org.ballerinalang.model.NativeCallableUnit;
@@ -96,11 +95,10 @@ public class SendAdvanced implements NativeCallableUnit {
             if (producerProperties.get(ProducerConfig.TRANSACTIONAL_ID_CONFIG) != null
                     && context.isInTransaction()) {
                 String connectorKey = producerConnector.getStringField(0);
-                BallerinaTransactionManager ballerinaTxManager = context.getBallerinaTransactionManager();
-                BallerinaTransactionContext regTxContext = ballerinaTxManager.getTransactionContext(connectorKey);
+                BallerinaTransactionContext regTxContext = context.getLocalTransactionInfo().getTransactionContext(connectorKey);
                 if (regTxContext == null) {
                     KafkaTransactionContext txContext = new KafkaTransactionContext(kafkaProducer);
-                    ballerinaTxManager.registerTransactionContext(connectorKey, txContext);
+                    context.getLocalTransactionInfo().registerTransactionContext(connectorKey, txContext);
                     kafkaProducer.beginTransaction();
                 }
             }

@@ -19,7 +19,6 @@ package org.ballerinalang.net.kafka.impl;
 
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.ballerinalang.connector.api.ConnectorFuture;
 import org.ballerinalang.connector.api.Executor;
 import org.ballerinalang.connector.api.Resource;
 import org.ballerinalang.net.kafka.KafkaUtils;
@@ -46,8 +45,8 @@ public class KafkaListenerImpl implements KafkaListener {
     @Override
     public void onRecordsReceived(ConsumerRecords records,
                                   KafkaConsumer kafkaConsumer) {
-        Executor.submit(resource, null, KafkaUtils.getSignatureParameters(resource, records,
-                kafkaConsumer));
+        //Executor.submit(resource, null, KafkaUtils.getSignatureParameters(resource, records,
+        //        kafkaConsumer));
     }
 
     /**
@@ -58,9 +57,9 @@ public class KafkaListenerImpl implements KafkaListener {
                                   KafkaConsumer kafkaConsumer,
                                   KafkaPollCycleFutureListener listener,
                                   String groupID) {
-        ConnectorFuture future = Executor.submit(resource, null,
-                KafkaUtils.getSignatureParameters(resource, records, kafkaConsumer, groupID));
-        future.setConnectorFutureListener(listener);
+        //ConnectorFuture future = Executor.submit(resource, null,
+        //        KafkaUtils.getSignatureParameters(resource, records, kafkaConsumer, groupID));
+        //future.setConnectorFutureListener(listener);
 
     }
 

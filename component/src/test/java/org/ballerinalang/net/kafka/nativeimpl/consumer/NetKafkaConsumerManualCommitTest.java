@@ -18,9 +18,8 @@
 
 package org.ballerinalang.net.kafka.nativeimpl.consumer;
 
-import io.debezium.kafka.KafkaCluster;
-import io.debezium.util.Testing;
 import org.ballerinalang.bre.Context;
+import org.ballerinalang.bre.bvm.WorkerExecutionContext;
 import org.ballerinalang.launcher.util.BCompileUtil;
 import org.ballerinalang.launcher.util.BRunUtil;
 import org.ballerinalang.launcher.util.CompileResult;
@@ -36,6 +35,9 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import io.debezium.kafka.KafkaCluster;
+import io.debezium.util.Testing;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,7 +90,7 @@ public class NetKafkaConsumerManualCommitTest {
             }
         }
         Assert.assertEquals(msgCount, 10);
-        Context ctx = new Context(result.getProgFile());
+        Context ctx = new WorkerExecutionContext(result.getProgFile());
         BStruct part = createPartitionStruct(ctx);
         part.setStringField(0, "test");
         part.setIntField(0, 0);

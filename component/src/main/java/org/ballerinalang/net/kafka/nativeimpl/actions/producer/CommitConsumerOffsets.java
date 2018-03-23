@@ -71,7 +71,7 @@ public class CommitConsumerOffsets implements NativeCallableUnit {
         Properties producerProperties = (Properties) producerStruct
                 .getNativeData(KafkaConstants.NATIVE_PRODUCER_CONFIG);
 
-        BRefValueArray offsets = ((BRefValueArray) context.getRefArgument(1);
+        BRefValueArray offsets = ((BRefValueArray) context.getRefArgument(1));
         String groupID = context.getStringArgument(0);
         Map<TopicPartition, OffsetAndMetadata> partitionToMetadataMap = new HashMap<>();
 
@@ -88,11 +88,10 @@ public class CommitConsumerOffsets implements NativeCallableUnit {
             if (producerProperties.get(ProducerConfig.TRANSACTIONAL_ID_CONFIG) != null
                     && context.isInTransaction()) {
                 String connectorKey = producerConnector.getStringField(0);
-                BallerinaTransactionManager ballerinaTxManager = context.getBallerinaTransactionManager();
-                BallerinaTransactionContext regTxContext = ballerinaTxManager.getTransactionContext(connectorKey);
+                BallerinaTransactionContext regTxContext = context.getLocalTransactionInfo().getTransactionContext(connectorKey);
                 if (regTxContext == null) {
                     KafkaTransactionContext txContext = new KafkaTransactionContext(kafkaProducer);
-                    ballerinaTxManager.registerTransactionContext(connectorKey, txContext);
+                    context.getLocalTransactionInfo().registerTransactionContext(connectorKey, txContext);
                     kafkaProducer.beginTransaction();
                 }
             }

@@ -17,10 +17,6 @@
 
 package org.ballerinalang.net.kafka.nativeimpl.functions.consumer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.KafkaException;
@@ -29,6 +25,7 @@ import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
 import org.ballerinalang.bre.bvm.CallableUnitCallback;
 import org.ballerinalang.bre.bvm.WorkerContext;
+import org.ballerinalang.bre.bvm.WorkerExecutionContext;
 import org.ballerinalang.model.NativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BFunctionPointer;
@@ -36,7 +33,6 @@ import org.ballerinalang.model.values.BRefType;
 import org.ballerinalang.model.values.BRefValueArray;
 import org.ballerinalang.model.values.BStringArray;
 import org.ballerinalang.model.values.BStruct;
-import org.ballerinalang.natives.AbstractNativeFunction;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.Receiver;
@@ -47,6 +43,10 @@ import org.ballerinalang.util.codegen.ProgramFile;
 import org.ballerinalang.util.codegen.cpentries.FunctionRefCPEntry;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.ballerinalang.util.program.BLangFunctions;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Native function ballerina.net.kafka:subscribeWithPartitionRebalance subscribes to given topic array
@@ -71,7 +71,7 @@ public class SubscribeWithPartitionRebalance implements NativeCallableUnit {
     @Override
     public void execute(Context context, CallableUnitCallback callableUnitCallback) {
         BStruct consumerStruct = (BStruct) context.getRefArgument(0);
-        BStringArray topicArray = (BStringArray) getRefArgument(context, 1);
+        BStringArray topicArray = (BStringArray) context.getRefArgument(1);
         ArrayList<String> topics = new ArrayList<String>();
         for (int counter = 0; counter < topicArray.size(); counter++) {
             topics.add(topicArray.get(counter));
@@ -79,21 +79,24 @@ public class SubscribeWithPartitionRebalance implements NativeCallableUnit {
 
         FunctionRefCPEntry onPartitionsRevoked = null;
         FunctionRefCPEntry onPartitionsAssigned = null;
+        /*
         if (context.getControlStackNew().getCurrentFrame().getRefLocalVars()[2] != null && context.getControlStackNew()
                 .getCurrentFrame().getRefLocalVars()[2] instanceof BFunctionPointer) {
-            onPartitionsRevoked = ((BFunctionPointer) getRefArgument(context, 2)).value();
+            onPartitionsRevoked = ((BFunctionPointer) context.getRefArgument(2)).value();
         } else {
-            return getBValues(BLangVMErrors.createError(context, 0,
+            context.setReturnValues(BLangVMErrors.createError(context, 0,
                     "The onPartitionsRevoked function is not provided."));
         }
-
+        */
+        /*
         if (context.getControlStackNew().getCurrentFrame().getRefLocalVars()[3] != null && context.getControlStackNew()
                 .getCurrentFrame().getRefLocalVars()[3] instanceof BFunctionPointer) {
-            onPartitionsAssigned = ((BFunctionPointer) getRefArgument(context, 3)).value();
+            onPartitionsAssigned = ((BFunctionPointer) context.getRefArgument(3)).value();
         } else {
-            return getBValues(BLangVMErrors.createError(context, 0,
+            context.setReturnValues(BLangVMErrors.createError(context, 0,
                     "The onPartitionsAssigned function is not provided."));
         }
+        */
 
         ConsumerRebalanceListener listener = new KafkaRebalanceListener(context, onPartitionsRevoked,
                 onPartitionsAssigned, this, consumerStruct);
@@ -111,7 +114,7 @@ public class SubscribeWithPartitionRebalance implements NativeCallableUnit {
                 IllegalStateException | KafkaException e) {
                     context.setReturnValues(BLangVMErrors.createError(context, 0, e.getMessage()));
                 }
-        return VOID_RETURN;
+        context.setReturnValues();
     }
 
     /**
@@ -125,13 +128,13 @@ public class SubscribeWithPartitionRebalance implements NativeCallableUnit {
         private Context context;
         private FunctionRefCPEntry onPartitionsRevoked;
         private FunctionRefCPEntry onPartitionsAssigned;
-        private AbstractNativeFunction function;
+        private NativeCallableUnit function;
         private BStruct consumerStruct;
 
         KafkaRebalanceListener(Context context,
                                FunctionRefCPEntry onPartitionsRevoked,
                                FunctionRefCPEntry onPartitionsAssigned,
-                               AbstractNativeFunction function,
+                               NativeCallableUnit function,
                                BStruct consumerStruct) {
             this.context = context;
             this.onPartitionsRevoked = onPartitionsRevoked;
@@ -146,10 +149,11 @@ public class SubscribeWithPartitionRebalance implements NativeCallableUnit {
         @Override
         public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
             ProgramFile programFile = context.getProgramFile();
-            Context childContext = new WorkerContext(programFile, context);
-            BLangFunctions
-                    .invokeFunction(programFile, onPartitionsRevoked.getFunctionInfo(),
-                            function.getBValues(consumerStruct, getPartitionsArray(partitions)), childContext);
+            WorkerExecutionContext childContext = new WorkerExecutionContext(programFile);
+            childContext.parent = (WorkerExecutionContext)context;
+            //BLangFunctions
+            //        .invokeFunction(programFile, onPartitionsRevoked.getFunctionInfo(),
+            //                childContext.getBValues(consumerStruct, getPartitionsArray(partitions)), childContext);
         }
 
         /**
@@ -158,10 +162,11 @@ public class SubscribeWithPartitionRebalance implements NativeCallableUnit {
         @Override
         public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
             ProgramFile programFile = context.getProgramFile();
-            Context childContext = new WorkerContext(programFile, context);
-            BLangFunctions
-                    .invokeFunction(programFile, onPartitionsAssigned.getFunctionInfo(),
-                            function.getBValues(consumerStruct, getPartitionsArray(partitions)), childContext);
+            WorkerExecutionContext childContext = new WorkerExecutionContext(programFile);
+            childContext.parent = (WorkerExecutionContext)context;
+            //BLangFunctions
+            //        .invokeFunction(programFile, onPartitionsAssigned.getFunctionInfo(),
+            //                function.getBValues(consumerStruct, getPartitionsArray(partitions)), childContext);
 
         }
 
